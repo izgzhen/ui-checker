@@ -1,0 +1,23 @@
+#include "../rules/input.dl"
+
+.decl hasHelloWorld(v: ViewID)
+hasHelloWorld(V) :- idName("venus_title", V),
+                        layoutHeight("wrap_content", V),
+                        viewClass("android.widget.TextView", V),
+                        layoutWidth("wrap_content", V),
+                        textSizeSP(36, V),
+                        // startToEndOf("hello_world", U), // FIXME: this is outdated
+                        mainActivity("com.example.test01.MainActivity"),
+                        rootView("com.example.test01.MainActivity", W),
+                        containsT(W, V).
+                        // containsT(W, U).
+.output hasHelloWorld
+
+.decl hasContinue(v: ViewID)
+hasContinue(V) :- actionButton(V),
+                    eventHandler("click", "&lt;com.example.test01.MainActivity$1: void onClick(android.view.View)&gt;", V).
+.output hasContinue
+
+.decl hasBackPressed(act: Class)
+hasBackPressed(ACT) :- activityEventHandler("backPressed", "&lt;com.example.test01.Main2Activity: void onBackPressed()&gt;", ACT).
+.output hasBackPressed

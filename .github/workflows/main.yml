@@ -1,0 +1,51 @@
+name: CI
+
+on: [push]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        token: ${{ secrets.REPO_SCOPED_TOKEN }}
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v1.1.1
+      with:
+        python-version: 3.6
+    - name: Cache poetry
+      uses: actions/cache@v1
+      with:
+        path: ~/.poetry
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-poetry-1.0.2 # needs manual eviction
+    - name: Cache poetry env
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+    - name: Set up dependencies
+      run: |
+        bash .github/workflows/setup-deps.sh
+    - name: Set up android dependencies
+      run: |
+        wget --quiet https://github.com/izgzhen/android-platforms/releases/download/v0.1/android-tools-linux.zip
+        unzip -q android-tools-linux.zip -d android-tools-linux
+        yes | android-tools-linux/tools/bin/sdkmanager --licenses
+        android-tools-linux/tools/bin/sdkmanager 'platforms;android-29'
+    # Runs a single command using the runners shell
+    - name: Test analyzer
+      run: |
+        ANDROID_SDK=$PWD/android-tools-linux ~/.poetry/bin/poetry run python test.py
+      env:
+        GTIME: /usr/bin/time

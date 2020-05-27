@@ -1,0 +1,9 @@
+outputs
+output
+tmp
+__pycache__
+.project
+.settings
+.classpath
+.mypy_cache
+.venv

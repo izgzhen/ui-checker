@@ -1,0 +1,22 @@
+methodSig setIntentAction(android.content.Intent, setAction)
+methodSig setIntentData(android.content.Intent, setData)
+methodSig setIntentPackage(android.content.Intent, setPackage)
+methodSig startActivity(android.app.Activity, startActivity)
+methodSig initIntent(android.content.Intent, <init>)
+methodSig setIntentClassName(android.content.Intent, setClassName)
+exported methodSig sig(_C, _f)
+
+class _C(_packageNotWhitelisted) {
+  _ret _f(...) {
+    {
+      setIntentAction(..., "android.intent.action.VIEW");
+      setIntentData(..., r"market.*");
+      setIntentPackage(..., "com.android.vending");
+      startActivity(...);
+    } or {
+      initIntent(..., "android.intent.action.VIEW");
+      setIntentClassName(..., "com.android.browser", "com.android.browser.BrowserActivity");
+      startActivity(...);
+    }
+  }
+}

@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "android-ui-checker"
+version = "0.1.0"
+description = ""
+authors = ["Zhen Zhang <git@zhen-zhang.com>"]
+license = "Apache-2.0"
+
+[tool.poetry.dependencies]
+python = "^3.6.1"
+msbase = {git = "https://github.com/izgzhen/msbase.py"}
+pexpect = "^4.8.0"
+lark-parser = "^0.8.2"
+path = "^13.2.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
