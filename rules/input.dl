@@ -33,36 +33,26 @@
 // https://developer.android.com/reference/android/view/View#attr_android:layoutHeight
 .decl layoutHeight(dim: Dimension, v: ViewID)
 .input layoutHeight
+
 .decl layoutHeightSP(sp: SP, v: ViewID)
 .input layoutHeightSP
-.decl layoutHeight2SP(sp: SP, v: ViewID)
-.input layoutHeight2SP
 .decl layoutHeightDIP(dip: DIP, v: ViewID)
 .input layoutHeightDIP
-.decl layoutHeight2DIP(dip: DIP, v: ViewID)
-.input layoutHeight2DIP
 
 // https://developer.android.com/reference/android/view/View#attr_android:layoutWidth
 .decl layoutWidth(dim: Dimension, v: ViewID)
 .input layoutWidth
+
 .decl layoutWidthSP(sp: SP, v: ViewID)
 .input layoutWidthSP
-.decl layoutWidth2SP(sp: SP, v: ViewID)
-.input layoutWidth2SP
 .decl layoutWidthDIP(dip: DIP, v: ViewID)
 .input layoutWidthDIP
-.decl layoutWidth2DIP(dip: DIP, v: ViewID)
-.input layoutWidth2DIP
 
 // https://developer.android.com/reference/android/widget/TextView#attr_android:textSize
 .decl textSizeSP(sp: SP, v: ViewID)
 .input textSizeSP
-.decl textSize2SP(sp: SP, v: ViewID)
-.input textSize2SP
 .decl textSizeDIP(dip: DIP, v: ViewID)
 .input textSizeDIP
-.decl textSize2DIP(dip: DIP, v: ViewID)
-.input textSize2DIP
 
 // TODO: factor it down into viewClass + not exists contentDescription?
 // https://developer.android.com/reference/android/view/View#attr_android:contentDescription
@@ -97,18 +87,25 @@
 
 .decl layout_constraintEnd_toStartOf(u: ViewID, x: IdName)
 .input layout_constraintEnd_toStartOf
+
 .decl layout_constraintStart_toEndOf(u: ViewID, x: IdName)
 .input layout_constraintStart_toEndOf
+
 .decl layout_constraintEnd_toEndOf(u: ViewID, x: IdName)
 .input layout_constraintEnd_toEndOf
+
 .decl layout_constraintStart_toStartOf(u: ViewID, x: IdName)
 .input layout_constraintStart_toStartOf
+
 .decl layout_constraintBottom_toTopOf(u: ViewID, x: IdName)
 .input layout_constraintBottom_toTopOf
+
 .decl layout_constraintTop_toBottomOf(u: ViewID, x: IdName)
 .input layout_constraintTop_toBottomOf
+
 .decl layout_constraintBottom_toBottomOf(u: ViewID, x: IdName)
 .input layout_constraintBottom_toBottomOf
+
 .decl layout_constraintTop_toTopOf(u: ViewID, x: IdName)
 .input layout_constraintTop_toTopOf
 
@@ -134,46 +131,64 @@
 
 .decl preferenceActivity(act: Class)
 .input preferenceActivity
+
 //*** Event handler properties ***//
 // Event handler of view v is cb when event e happens
 .decl eventHandler(e: Event, cb: Method, v: ViewID)
 .input eventHandler
+
 .decl activityEventHandler(e: Event, cb: Method, act: Class)
 .input activityEventHandler
+
 .decl intentFilter(action: Class, cb: Method)
 .input intentFilter
+
 //*** FIXME (too adhoc) ***//
 // any callback that trigger interstitial ad by ad-network
 .decl showInterstitialAd(cb: Method, ad: Method)
 .input showInterstitialAd
+
 // any callback that reaches general ad show API by ad-network
 .decl showAd(cb: Method, ad: Method)
 .input showAd
+
 .decl showSuspiciousAd(cb: Method, ad: Method)
 .input showSuspiciousAd
+
 .decl showSuspiciousInterstitialAd(cb: Method, ad: Method)
 .input showSuspiciousInterstitialAd
+
 .decl setNPA(m: Method)
 .input setNPA
+
 .decl adViewClass(c: Class)
 .input adViewClass
+
 .decl adViewIdName(c: IdName)
 .input adViewIdName
+
 .decl serviceClass(c: Class)
 .input serviceClass
+
 .decl serviceClassLastName(c: Class, s: String)
 .input serviceClassLastName
+
 .decl loadGoogleConsentForm(m: Method, callsite: Method)
 .input loadGoogleConsentForm
+
 .decl readAudio(m: Method, callsite: Method)
 .input readAudio
+
 .decl downloadApp(m: Method, callsite: Method)
 .input downloadApp
+
 .decl invokesReflectiveAPI(m: Method, callsite: Method)
 .input invokesReflectiveAPI
+
 // click of a sub-view Button in the dialog will trigger cb
 .decl alertDialogFixedButtonHandler(cb: Method, v: ViewID)
 .input alertDialogFixedButtonHandler
+
 //*** View allocation site properties ***//
 // callback cb of some activity will triagger allocation of Dialog view node v
 
@@ -181,34 +196,42 @@
 // Method will reach startActivity of some intent that views certain hosts
 .decl startViewActivityOfSomeHosts(cb: Method, callsite: Method)
 .input startViewActivityOfSomeHosts
+
 .decl startViewActivityOfMarketHost(cb: Method, callsite: Method)
 .input startViewActivityOfMarketHost
+
 .decl startActivity(cb: Method, callsite: Method, act: Class)
 .input startActivity
+
 .decl finishActivity(cb: Method, callsite: Method, act: Class)
 .input finishActivity
+
 .decl showDialog(cb: Method, callsite: Method, dialog: ViewID)
 .input showDialog
+
 // .decl showSnackBar(v: ViewID, m: Method)
 // .input showSnackBar
 // .decl2 showSnackBar(v: ViewID, m: Method)
-// .input showSnackBar2
 .decl setStatus(m: Method, callsite: Method)
 .input setStatus
+
 .decl loadWebViewUrl(m: Method, callsite: Method, url: String)
 .input loadWebViewUrl
+
 .decl lifecycleMethod(act: Class, methodName: String, method: Method)
 .input lifecycleMethod
+
 .decl setConsetInfoUpdateHandler(m1: Method, callsite: Method, m2: Method)
 .input setConsetInfoUpdateHandler
+
 // Dummy predicate to force Souffle explain output
 .decl dummy(i: number)
 .input dummy
 
 //------------------ General derivations ------------------//
 
-.decl entryView(v: ViewID)
-entryView(V) :- rootView(ACT, V), mainActivity(ACT).
+.decl entryView(v: ViewID, a: Class)
+entryView(V, ACT) :- rootView(ACT, V), mainActivity(ACT).
 
 .decl containsT(u: ViewID, v: ViewID)
 containsT(X, Y) :- containsView(X, Y).
@@ -263,14 +286,14 @@ centered(V) :- verticalCentered(V), horizontalCentered(V).
 
 // TODO: more cases
 .decl overlapping(v: ViewID, u: ViewID)
-overlapping(V1, V2) :- centered(V1), centered(V2).
+overlapping(V1, V2) :- centered(V1), centered(V2), V1 != V2.
 
 .decl adjacent(v: ViewID, u: ViewID)
 adjacent(V, U) :- rightToLeftOf(V, U).
 adjacent(V, U) :- rightToLeftOf(U, V).
 
 .decl transitWindow(w1: ViewID, w2: ViewID)
-transitWindow(W1, W2) :- entryView(W1), containsT(W1, V), eventHandler(E, CB, V), finishActivity(CB, CS, A2), rootView(A2, W2).
+transitWindow(W1, W2) :- entryView(W1, A1), containsT(W1, V), eventHandler(E, CB, V), finishActivity(CB, CS, A2), rootView(A2, W2), A1 != A2.
 
 // FIXME: press_key should be refine to press_back by control-sensitivity
 .decl backPressedHandler(cb: Method, act: Class)
