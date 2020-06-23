@@ -1444,7 +1444,6 @@ kotlin.template.*
 kotlin.test.*
 kotlin.text.*
 kotlin.util.*
-kr.co.*
 kr.nectarine.*
 lecho.lib.*
 libcore.icu.*

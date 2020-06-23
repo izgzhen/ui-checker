@@ -125,6 +125,7 @@ object GUIAnalysis extends IAnalysis {
         val method = act.getMethodByNameUnsafe(methodName)
         if (method != null) {
           writer.writeConstraint(ConstraintWriter.Constraint.eventHandler, eventType, method, viewNode.nodeID)
+          analyzeAnyHandlerPostVASCO(method)
         }
       }
     }
@@ -228,6 +229,10 @@ object GUIAnalysis extends IAnalysis {
 
   val extraEdgeOutMap: mutable.Map[SootMethod, mutable.Set[SootMethod]] = mutable.Map()
 
+  private def isTargetMethod(target: SootMethod): Boolean =
+    target.isConcrete && target.hasActiveBody && target.getDeclaringClass.isApplicationClass &&
+      (!Configs.isLibraryClass(target.getDeclaringClass.getName))
+
   def patchCallGraph(): Unit = {
     for (c <- Scene.v().getApplicationClasses.asScala) {
       for (m <- c.getMethods.asScala) {
@@ -235,10 +240,40 @@ object GUIAnalysis extends IAnalysis {
           for (unit <- m.getActiveBody.getUnits.asScala) {
             val stmt = unit.asInstanceOf[Stmt]
             if (stmt.containsInvokeExpr()) {
-              val target = Util.getMethodUnsafe(stmt.getInvokeExpr)
-              if (target != null) {
-                if (target.isConcrete && target.hasActiveBody && target.getDeclaringClass.isApplicationClass &&
-                  (!Configs.isLibraryClass(target.getDeclaringClass.getName))) {
+              val dispatchedTargets = mutable.Set[SootMethod]()
+              val invokedTarget = Util.getMethodUnsafe(stmt.getInvokeExpr)
+              if (invokedTarget != null) {
+                if (isTargetMethod(invokedTarget)) {
+                  dispatchedTargets.add(invokedTarget)
+                } else {
+                  stmt.getInvokeExpr match {
+                    case instanceInvokeExpr: InstanceInvokeExpr =>
+                      instanceInvokeExpr.getBase.getType match {
+                        case refType: RefType =>
+                          val dispatchedTarget = hier.virtualDispatch(invokedTarget, refType.getSootClass)
+                          if (dispatchedTarget != null && isTargetMethod(dispatchedTarget)) {
+                            dispatchedTargets.add(dispatchedTarget)
+                          } else {
+                            val subTypes = hier.getConcreteSubtypes(refType.getSootClass).asScala
+                            if (subTypes.size < 5) { // FIXME: avoid over-explosion....
+                              for (subClass <- subTypes) {
+                                if (subClass != null && subClass.isConcrete) {
+                                  val dispatchedTarget = hier.virtualDispatch(invokedTarget, subClass)
+                                  if (dispatchedTarget != null) {
+                                    dispatchedTargets.add(dispatchedTarget)
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        case _ =>
+                      }
+                    case _ =>
+                  }
+                }
+              }
+              for (target <- dispatchedTargets) {
+                if (isTargetMethod(target)) {
                   var edge: Edge = null
                   try {
                     edge = Scene.v().getCallGraph.findEdge(stmt, target)
@@ -354,7 +389,9 @@ object GUIAnalysis extends IAnalysis {
       analyzeAnyHandlerPostVASCO(handler)
     }
 
-    writer.writeConstraint(ConstraintWriter.Constraint.mainActivity, mainActivity)
+    if (mainActivity != null) {
+      writer.writeConstraint(ConstraintWriter.Constraint.mainActivity, mainActivity)
+    }
 
     for ((className, filters) <- xmlParser.getIntentFilters.asScala) {
       try {
@@ -403,7 +440,7 @@ object GUIAnalysis extends IAnalysis {
       val stmt = unit.asInstanceOf[Stmt]
       if (stmt.containsInvokeExpr()) {
         val invokeExpr = stmt.getInvokeExpr
-        if (Constants.isActivityRunOnUiThread(invokeExpr.getMethod.getSignature)) {
+        if (Constants.isActivityRunOnUiThread(invokeExpr.getMethod)) {
           val runnableArg = invokeExpr.getArg(0).asInstanceOf[Local]
           val runnableArgClass = runnableArg.getType.asInstanceOf[RefType].getSootClass
           val runMethod = runnableArgClass.getMethodByNameUnsafe("run")
@@ -535,7 +572,12 @@ object GUIAnalysis extends IAnalysis {
     }
   }
 
+  private val analyzedHandlers = mutable.Set[SootMethod]()
   def analyzeAnyHandlerPostVASCO(handler: SootMethod): Unit = {
+    if (analyzedHandlers.contains(handler)) {
+      return
+    }
+    analyzedHandlers.add(handler)
     val reachedMethods = reachableMethods(handler)
 
     // Analyze the end-points
@@ -545,6 +587,7 @@ object GUIAnalysis extends IAnalysis {
         for (((viewNode, eventType), eventHandlers) <- aftDomain.nodeHandlerMap) {
           for (eventHandler <- eventHandlers) {
             writer.writeConstraint(ConstraintWriter.Constraint.eventHandler, eventType, eventHandler, viewNode.nodeID)
+            analyzeAnyHandlerPostVASCO(eventHandler)
           }
         }
         for ((act, nodes) <- aftDomain.activityRootViewMap) {
@@ -673,7 +716,7 @@ object GUIAnalysis extends IAnalysis {
             }
             // NOTE: the "reached" field here has a different semantics than gator version
             if (Constants.isAdMethod(invokeExpr.getMethod)) {
-              writer.writeConstraint(ConstraintWriter.Constraint.showAd, handler, reached)
+              writer.writeConstraint(ConstraintWriter.Constraint.showAd, handler, invokeExpr.getMethod)
             }
             if (Constants.isSuspiciousAdMethod(invokeExpr.getMethod)) {
               writer.writeConstraint(ConstraintWriter.Constraint.showSuspiciousAd, handler, reached)
@@ -697,6 +740,10 @@ object GUIAnalysis extends IAnalysis {
   def saveOldCallGraph(): Unit = {
     methodTargets =
       Scene.v().getCallGraph.sourceMethods().asScala.map(src => (src.method(), Scene.v().getCallGraph.edgesOutOf(src).asScala.map(_.getTgt.method()).toSet)).toMap
+  }
+
+  def getCallees(methodSig: String): List[SootMethod] = {
+    Scene.v.getCallGraph.edgesOutOf(Scene.v.getMethod(methodSig)).asScala.map(_.getTgt.method).toList
   }
 
   private var ic3Enabled = false
@@ -817,7 +864,8 @@ object GUIAnalysis extends IAnalysis {
 
   private def instrumentAllDialogInit(): Unit = {
     for (c <- Scene.v.getApplicationClasses.asScala) {
-      for (m <- c.getMethods.asScala) {
+      val methods = c.getMethods.asScala.toList
+      for (m <- methods) { // FIXME: ConcurrentModificationError
         if (m.isConcrete && m.hasActiveBody) {
           val customDialogInit: Iterable[(soot.Unit, Local, SootMethod)] = m.getActiveBody.getUnits.asScala.flatMap {
             case stmt: Stmt if stmt.containsInvokeExpr() =>

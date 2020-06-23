@@ -2,6 +2,7 @@
 # artifact incrementally before running on the target APK
 
 set -e
+set -x
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 

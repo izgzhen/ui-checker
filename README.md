@@ -3,6 +3,7 @@ Android UI Checker
 
 Dependencies:
 
+- `git submodule update --init`
 - `poetry install; poetry shell`
   + Symbolic link the virtual env (by `which python`, take its grand-parent dir)
     created by poetry to `.venv`

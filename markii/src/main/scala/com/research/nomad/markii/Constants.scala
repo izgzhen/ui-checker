@@ -25,9 +25,11 @@ object Constants {
       method.getSubSignature == MethodNames.onActivityCreateSubSig
 
   val androidViewClassName = "android.view.View"
+
   val androidActivityClassNames = List(
     "android.app.Activity",
-    "android.support.v7.app.AppCompatActivity"
+    "android.support.v7.app.AppCompatActivity",
+    "androidx.appcompat.app.AppCompatActivity"
   )
   val androidDialogClassName = "android.app.Dialog"
   val androidDialogOnClickListenerClassName = "android.content.DialogInterface$OnClickListener"
@@ -111,28 +113,29 @@ object Constants {
     ("com.screen.main.CoverAdComponent", "showAd"),
     ("com.Leadbolt.AdController", "loadNotification"))
 
-  def isActivitySetContentViewWithInt(sig: String) =
-    androidActivityClassNames.exists(c => sig == s"<${c}: void setContentView(int)>")
+  def isActivitySetContentViewWithInt(m: SootMethod): Boolean =
+    m.getSubSignature == "void setContentView(int)" && isActivity(m.getDeclaringClass)
 
-  def isActivitySetContentViewWithView(sig: String) =
-    androidActivityClassNames.exists(c => sig == s"<${c}: void setContentView(android.view.View)>")
+  def isActivitySetContentViewWithView(m: SootMethod): Boolean =
+    m.getSubSignature == "void setContentView(android.view.View)" && isActivity(m.getDeclaringClass)
 
-  def isActivityFindViewById(sig: String) =
-    androidActivityClassNames.exists(c => sig == s"<${c}: android.view.View findViewById(int)>")
+  def isActivityFindViewById(m: SootMethod): Boolean =
+    m.getSubSignature == "android.view.View findViewById(int)" && isActivity(m.getDeclaringClass)
 
-  def isActivityRunOnUiThread(sig: String) =
-    androidActivityClassNames.exists(c => sig == s"<${c}: void runOnUiThread(java.lang.Runnable)>")
+  def isActivityRunOnUiThread(m: SootMethod): Boolean =
+    m.getSubSignature == "void runOnUiThread(java.lang.Runnable)" && isActivity(m.getDeclaringClass)
 
-  def isDialogSetContentViewWithInt(sig: String) =
-    dialogClassNames.exists(c => sig == s"<${c}: void setContentView(int)>")
+  def isDialogSetContentViewWithInt(m: SootMethod): Boolean =
+    m.getSubSignature == "void setContentView(int)" && isDialogClass(m.getDeclaringClass)
 
-  def isDialogSetContentViewWithView(sig: String) =
-    dialogClassNames.exists(c => sig == s"<${c}: void setContentView(android.view.View)>")
+  def isDialogSetContentViewWithView(m: SootMethod): Boolean =
+    m.getSubSignature == "void setContentView(android.view.View)" && isDialogClass(m.getDeclaringClass)
 
-  def isDialogFindViewById(sig: String) =
-    dialogClassNames.exists(c => sig == s"<${c}: android.view.View findViewById(int)>")
+  def isDialogFindViewById(m: SootMethod): Boolean =
+    m.getSubSignature == "android.view.View findViewById(int)" && isDialogClass(m.getDeclaringClass)
 
-  def isViewFindViewById(sig: String) = sig == "<android.view.View: android.view.View findViewById(int)>"
+  def isViewFindViewById(m: SootMethod): Boolean =
+    m.getSignature == "<android.view.View: android.view.View findViewById(int)>"
 
   private val adClassSuffixMethodName = List(("LGUDMPAdView", "execute"))
 

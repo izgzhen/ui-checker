@@ -85,7 +85,7 @@ class AbstractValuePropVasco(entryPoints: List[SootMethod])
         }
       case invokeExpr: InstanceInvokeExpr =>
         val signature = invokeExpr.getMethod.getSignature
-        if (Constants.isActivityFindViewById(signature)) {
+        if (Constants.isActivityFindViewById(invokeExpr.getMethod)) {
           invokeExpr.getArg(0) match {
             case intConstant: IntConstant =>
               val activityBase = invokeExpr.asInstanceOf[InstanceInvokeExpr].getBase
@@ -104,7 +104,7 @@ class AbstractValuePropVasco(entryPoints: List[SootMethod])
             case _ =>
           }
         }
-        if (Constants.isDialogFindViewById(signature) || Constants.isViewFindViewById(signature)) {
+        if (Constants.isDialogFindViewById(invokeExpr.getMethod) || Constants.isViewFindViewById(invokeExpr.getMethod)) {
           invokeExpr.getArg(0) match {
             case intConstant: IntConstant =>
               val viewLocal = invokeExpr.asInstanceOf[InstanceInvokeExpr].getBase.asInstanceOf[Local]
@@ -129,15 +129,18 @@ class AbstractValuePropVasco(entryPoints: List[SootMethod])
         val subSig = invokeExpr.getMethod.getSubSignature
         val setButtionType = Constants.fromDialogBuilderSetButton(subSig)
         if (setButtionType.nonEmpty) {
-          setDialogButtonListener(setButtionType.get, invokeExpr, killed, ctxMethod, assignStmt)
+          setDialogButtonListener(setButtionType.get, invokeExpr, input, ctxMethod, assignStmt)
         } else if (Constants.isDialogBuilderSetAny(subSig)) {
           input // Don't kill for other builder setters
         } else if (signature == "<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup,boolean)>") {
           // FIXME: other inflate signatures
           val intConstant = invokeExpr.getArg(0).asInstanceOf[IntConstant]
-          val parentView = invokeExpr.getArg(1).asInstanceOf[Local]
-          val attachToRoot = invokeExpr.getArg(2).asInstanceOf[IntConstant].value != 0
-          killed.inflate(ctxMethod, assignStmt, intConstant.value, ref, parentView, attachToRoot)
+          invokeExpr.getArg(1) match {
+            case parentView: Local =>
+              val attachToRoot = invokeExpr.getArg(2).asInstanceOf[IntConstant].value != 0
+              killed.inflate(ctxMethod, assignStmt, intConstant.value, ref, parentView, attachToRoot)
+            case _ => killed
+          }
         } else {
           killed
         }
@@ -163,7 +166,7 @@ class AbstractValuePropVasco(entryPoints: List[SootMethod])
     } else {
       logStateCounter += 1
     }
-    if (method.getSignature != "<com.McStats.vbstatsfree.VBGameControlActivity: void run()>") {
+    if (method.getSignature != "<xvideo.furbie.ro.AsyncListActivity: void gopro()>") {
       return
     }
     if (maxLog.nonEmpty) {
@@ -362,16 +365,16 @@ class AbstractValuePropVasco(entryPoints: List[SootMethod])
           }
           // FIXME: improve precision, handle View argument
           // FIMXE: sub-class won't get the correct predicat here
-          if (Constants.isActivitySetContentViewWithInt(invokeExpr.getMethod.getSignature)) {
+          if (Constants.isActivitySetContentViewWithInt(invokeExpr.getMethod)) {
             invokeExpr.getArg(0) match {
               case intConstant: IntConstant => return setContentView(d, context.getMethod, invokeExpr, stmt, Left(intConstant.value))
               case _ =>
             }
           }
-          if (Constants.isActivitySetContentViewWithView(invokeExpr.getMethod.getSignature)) {
+          if (Constants.isActivitySetContentViewWithView(invokeExpr.getMethod)) {
             return setContentView(d, context.getMethod, invokeExpr, stmt, Right(invokeExpr.getArg(0).asInstanceOf[Local]))
           }
-          if (Constants.isDialogSetContentViewWithInt(invokeExpr.getMethod.getSignature)) {
+          if (Constants.isDialogSetContentViewWithInt(invokeExpr.getMethod)) {
             val dialogBase = invokeExpr.asInstanceOf[InstanceInvokeExpr].getBase.asInstanceOf[Local]
             invokeExpr.getArg(0) match {
               case intConstant: IntConstant =>
@@ -379,7 +382,7 @@ class AbstractValuePropVasco(entryPoints: List[SootMethod])
               case _ =>
             }
           }
-          if (Constants.isDialogSetContentViewWithView(invokeExpr.getMethod.getSignature)) {
+          if (Constants.isDialogSetContentViewWithView(invokeExpr.getMethod)) {
             val dialogBase = invokeExpr.asInstanceOf[InstanceInvokeExpr].getBase.asInstanceOf[Local]
             return d.setContentViewDialog(context.getMethod, stmt, dialogBase, invokeExpr.getArg(0).asInstanceOf[Local])
           }

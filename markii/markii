@@ -111,12 +111,12 @@ def analyze(args, unknown):
         return
     if not args.logpath:
         try:
-            call(cmd, timeout=int(args.timeout))
+            assert call(cmd, timeout=int(args.timeout)) == 0
         except TimeoutExpired:
             sys.exit(-50)
     else:
         with open(args.logpath, 'w') as outfile:
-            call(cmd, timeout=int(args.timeout), stdout=outfile, stderr=outfile)
+            assert call(cmd, timeout=int(args.timeout), stdout=outfile, stderr=outfile) == 0
             print('...... log saved to %s' % outfile.name)
     remove_temp_dirs()
 

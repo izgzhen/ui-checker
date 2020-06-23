@@ -75,7 +75,7 @@ def parse_seconds(line: str):
 def run_markii(apk: str, facts_dir: str):
     os.system("mkdir -p " + facts_dir)
     # Run markii
-    try_call_std(["bash", "markii/build-run-markii.sh", apk, facts_dir], output=False, timeout_s=600)
+    try_call_std(["bash", "markii/build-run-markii.sh", apk, facts_dir], output=False, timeout_s=1200)
 
 class SouffleExplain(object):
     def __init__(self, facts_dir: str, spec_path: str):

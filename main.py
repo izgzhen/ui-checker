@@ -41,8 +41,8 @@ else:
 
 os.chdir(SCRIPT_DIR)
 
-facts_dir = SCRIPT_DIR + "/tmp/%s.facts_dir" % apk_name
-output_dir = SCRIPT_DIR + "/output/%s/" % apk_name
+facts_dir = SCRIPT_DIR + "/tmp_%s/%s.facts_dir" % ("markii", apk_name)
+output_dir = SCRIPT_DIR + "/output_%s/%s/" % ("markii", apk_name)
 os.system("mkdir -p %s" % output_dir)
 
 SOLVE_DL_ONLY = os.getenv("SOLVE_DL_ONLY")
@@ -59,6 +59,7 @@ def valid_fact_dir(d: str):
     if not os.path.isdir(d): return False
     facts = glob.glob(d + "/*.facts")
     if not facts: return False
+    if not any(file_size_mb(fact) > 0.0005 for fact in facts): return False
     return True
 
 if (not valid_fact_dir(facts_dir) or os.getenv('FORCE_RERUN')) and SOLVE_DL_ONLY != "1":

@@ -428,9 +428,9 @@ case class AFTDomain(private val localNodeMap: Map[Local, AccessPath[AbsNode]],
     for (builderNode <- getViewNodes(contextMethod, stmt, builderLocal)) {
       for (((node, buttonType), handlers) <- dialogHandlerMap) {
         if (node == builderNode) {
-          val newHandlers = d.dialogHandlerMap.getOrElse((builderNode, buttonType), Set()) ++ handlers
+          val newHandlers = d.dialogHandlerMap.getOrElse((dialogViewNode, buttonType), Set()) ++ handlers
           d = d.copy(
-            dialogHandlerMap = d.dialogHandlerMap + ((builderNode, buttonType) -> newHandlers)
+            dialogHandlerMap = d.dialogHandlerMap + ((dialogViewNode, buttonType) -> newHandlers)
           )
         }
       }
