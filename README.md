@@ -1,6 +1,8 @@
 Android UI Checker
 =====
 
+![CI](https://github.com/izgzhen/ui-checker/workflows/CI/badge.svg?branch=master)
+
 This is a tool that implements static analysis for extract GUI information and check them against
 Datalog-flavour spec.
 
@@ -11,6 +13,7 @@ Install dependencies:
 - Set up Java 8 environemnt
   - Find instructions online depending on your OS
   - Recommmend use https://www.jenv.be/ to make sure you are running JDK8
+- Set up SBT (https://www.scala-sbt.org/1.x/docs/Setup.html)
 - Set up python environment
   - `poetry install`
   - `poetry shell`
