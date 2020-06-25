@@ -1,6 +1,5 @@
 output
 target
-project
 .idea
 android-platforms
 __pycache__

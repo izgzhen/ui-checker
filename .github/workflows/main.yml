@@ -13,9 +13,9 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
-      with:
-        submodules: true
-        token: ${{ secrets.REPO_SCOPED_TOKEN }}
+      # with:
+      #   submodules: true
+      #   token: ${{ secrets.REPO_SCOPED_TOKEN }}
     - name: Set up Python 3.6
       uses: actions/setup-python@v1.1.1
       with:
@@ -36,7 +36,7 @@ jobs:
           ${{ runner.os }}-
     - name: Set up dependencies
       run: |
-        bash .github/workflows/setup-deps.sh
+        bash setup-deps.sh
     - name: Set up android dependencies
       run: |
         wget --quiet https://github.com/izgzhen/android-platforms/releases/download/v0.1/android-tools-linux.zip
