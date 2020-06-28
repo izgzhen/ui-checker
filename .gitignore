@@ -7,3 +7,5 @@ __pycache__
 .classpath
 .mypy_cache
 .venv
+output_*
+tmp_*

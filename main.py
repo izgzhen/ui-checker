@@ -59,7 +59,7 @@ def valid_fact_dir(d: str):
     if not os.path.isdir(d): return False
     facts = glob.glob(d + "/*.facts")
     if not facts: return False
-    if not any(file_size_mb(fact) > 0.0005 for fact in facts): return False
+    if not any(file_size_mb(fact) > 0 for fact in facts): return False
     return True
 
 if (not valid_fact_dir(facts_dir) or os.getenv('FORCE_RERUN')) and SOLVE_DL_ONLY != "1":
