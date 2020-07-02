@@ -128,7 +128,7 @@ if souffle_stats:
 
 if os.path.exists(output_dir + "/uicheck-results.json"):
     old_stat_results = load_json(output_dir + "/uicheck-results.json")
-    for k, v in stat_results.items():
+    for k, v in stat_results.items(): # type: ignore
         if v is None and k in old_stat_results:
             stat_results[k] = old_stat_results[k]
 write_pretty_json(stat_results,  output_dir + "/uicheck-results.json")
