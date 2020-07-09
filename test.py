@@ -2,10 +2,10 @@ from path import Path
 import os
 from common import get_successful_results
 
-with Path("tests/test01"):
+with Path("markii/tests/test01"):
     os.system("./gradlew assembleDebug")
 
-apk = "tests/test01/app/build/outputs/apk/debug/app-debug.apk"
+apk = "markii/tests/test01/app/build/outputs/apk/debug/app-debug.apk"
 
 apk_name = "test01"
 os.system("./uicheck " + apk + " tests/test_queries.dl " + apk_name)
