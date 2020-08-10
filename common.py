@@ -6,7 +6,7 @@ import csv
 from lark import Lark
 import pexpect
 
-from msbase.utils import load_json, write_pretty_json, log_progress, readlines
+from msbase.utils import load_json, write_pretty_json, log_progress, readlines, getenv
 from msbase.subprocess_ import try_call_std
 from xml.sax.saxutils import escape
 
@@ -72,10 +72,15 @@ def parse_seconds(line: str):
         seconds += 60 * 60 * float(time_segments[-3]) # type: ignore
     return seconds
 
+MARKII_TIMEOUT_SECONDS = int(getenv("MARKII_TIMEOUT_SECONDS", "1200"))
+
 def run_markii(apk: str, facts_dir: str):
     os.system("mkdir -p " + facts_dir)
     # Run markii
-    try_call_std(["bash", "markii/build-run-markii.sh", apk, facts_dir], output=False, timeout_s=1200)
+    try_call_std(["bash", "markii/build-run-markii.sh", apk, facts_dir],
+                 output=False, timeout_s=MARKII_TIMEOUT_SECONDS)
+
+SOUFFLE_TIMEOUT_SECONDS = int(getenv("SOUFFLE_TIMEOUT_SECONDS", "360"))
 
 class SouffleExplain(object):
     def __init__(self, facts_dir: str, spec_path: str):
@@ -90,7 +95,7 @@ class SouffleExplain(object):
         print("Launching explainer")
         try:
             self.p = pexpect.spawn(self.souffle_cmd)
-            self.p.expect('> ', timeout=360)
+            self.p.expect('> ', timeout=SOUFFLE_TIMEOUT_SECONDS)
             self.p.sendline("format json")
             self.p.sendline()
         except pexpect.exceptions.TIMEOUT as e:
