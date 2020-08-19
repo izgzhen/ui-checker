@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "android-ui-checker"
+name = "uichecker"
 version = "0.1.0"
 description = ""
 authors = ["Zhen Zhang <git@zhen-zhang.com>"]

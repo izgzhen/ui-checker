@@ -9,3 +9,4 @@ __pycache__
 .venv
 output_*
 tmp_*
+*.egg-info
