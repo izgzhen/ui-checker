@@ -13,7 +13,7 @@ from typing import Dict, Any, Set
 from msbase.subprocess_ import try_call_std
 from msbase.utils import load_json, write_pretty_json, file_size_mb
 
-from common import run_markii, produce_report, parse_seconds
+from uichecker.common import run_markii, produce_report, parse_seconds
 
 if os.getenv("GTIME"):
     gtime = os.getenv("GTIME")
