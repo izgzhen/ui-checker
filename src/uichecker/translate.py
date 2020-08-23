@@ -15,8 +15,10 @@ expr: expr binop expr           -> biexpr
     | uop expr                  -> uexpr
     | NAME "(" arguments ")"    -> callexpr
     | term                      -> termexpr
+    | "(" expr ")"              -> sameexpr
 binop : "=="                    -> eqop
       | "<"                     -> leop
+      | "/\\\\"                 -> andop
 uop : "!"                       -> negop
 arguments: term ("," term)*
 term: NAME                      -> var
@@ -53,6 +55,8 @@ class Expr(object):
             e = tree.children[1]
             self.uop = uop.data
             self.e = Expr(e)
+        elif tree.data == "sameexpr":
+            Expr.__init__(self, tree.children[0])
         elif tree.data == "callexpr":
             self.type = "callexpr"
             self.f = tree.children[0].value
@@ -110,6 +114,12 @@ class Expr(object):
             return f"{self.f} {self.args}"
         else:
             return super().__str__()
+
+    def optimize(self) -> 'Expr':
+        if self.type == "uexpr" and self.uop == "negop":
+            if self.e.type == "uexpr" and self.e.uop == "negop":
+                return self.e.e
+        return self
 
     def translate(self):
         if self.type == "var":
@@ -187,7 +197,7 @@ class Prog(object):
         # assume_1 /\ ... /\ assume_n /\ (!assert_1 ; !assert2 ; ...)
         for assume in self.assumes:
             conjuncts.append(assume.translate())
-        disj = "; ".join([(Expr.neg_expr(assertion)).translate() for assertion in self.asserts])
+        disj = "; ".join([(Expr.neg_expr(assertion)).optimize().translate() for assertion in self.asserts])
         conjuncts.append("(" + disj + ")")
         args = ", ".join([f"{var_name}" for ty_name, var_name in self.decls])
         lhs = f"{self.name}({args})"
