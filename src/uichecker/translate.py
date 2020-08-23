@@ -23,6 +23,7 @@ uop : "!"                       -> negop
 arguments: term ("," term)*
 term: NAME                      -> var
     | NUMBER                    -> number
+    | ESCAPED_STRING            -> string
 assert: "assert" expr ";"
 
 COMMENT: /\/\/.*/
@@ -30,6 +31,7 @@ COMMENT: /\/\/.*/
 %import common.CNAME -> NAME
 %import common.WS
 %import common.NUMBER
+%import common.ESCAPED_STRING
 
 %ignore WS
 %ignore COMMENT
@@ -62,6 +64,8 @@ class Expr(object):
             self.f = tree.children[0].value
             self.args = [ Expr(arg) for arg in tree.children[1].children ]
         elif tree.data == "var":
+            self.__init_term(tree)
+        elif tree.data == "string":
             self.__init_term(tree)
         elif tree.data == "termexpr":
             self.__init_term(tree.children[0])
@@ -99,6 +103,9 @@ class Expr(object):
         elif tree.data == "number":
             self.type = "number"
             self.number = int(tree.children[0].value)
+        elif tree.data == "string":
+            self.type = "string"
+            self.string = tree.children[0].value
         else:
             raise Exception(tree)
 
@@ -126,6 +133,8 @@ class Expr(object):
             return self.var
         elif self.type == "number":
             return str(self.number)
+        elif self.type == "string":
+            return self.string
         elif self.type == "uexpr":
             if self.uop == "negop":
                 return f"!({self.e.translate()})"
@@ -136,6 +145,8 @@ class Expr(object):
                 return f"{self.e1.translate()} = {self.e2.translate()}"
             elif self.binop == "leop":
                 return f"{self.e1.translate()} < {self.e2.translate()}"
+            elif self.binop == "andop":
+                return f"{self.e1.translate()} , {self.e2.translate()}"
             else:
                 # FIXME: process "and"
                 raise Exception(self)
@@ -166,10 +177,11 @@ class Prog(object):
                 ty_name = c1.value
                 var_name = c2.value
                 if any(imported_name == ty_name for _, imported_name in self.imports):
-                    # FIXME: analyze imports
-                    if ty_name == "adView":
+                    # TODO: analyze imports
+                    if ty_name in ["adView", "interstitialAd", "buttonView", "FAB"]:
+                        imported_ty_name = str(ty_name)
                         ty_name = "ViewID"
-                        self.assumes.append(Expr.call_expr("adView", Expr.var_expr(var_name)))
+                        self.assumes.append(Expr.call_expr(imported_ty_name, Expr.var_expr(var_name)))
                     else:
                         raise Exception(ty_name)
                 self.decls.append((ty_name, var_name))
@@ -193,16 +205,20 @@ class Prog(object):
         typed_args = ", ".join([f"{var_name}: {ty_name}" for ty_name, var_name in self.decls])
         ret += f".decl {self.name}({typed_args})" + "\n"
         conjuncts = []
-        # assume_1 /\ ... /\ assume_n /\ ! (assert_1 /\ assert2 /\ ...)
-        # assume_1 /\ ... /\ assume_n /\ (!assert_1 ; !assert2 ; ...)
+        # Step 1: assume_1 /\ ... /\ assume_n /\ ! (assert_1 /\ assert2 /\ ...)
+        # Step 2: assume_1 /\ ... /\ assume_n /\ (!assert_1 ; !assert2 ; ...)
+        # Step 3:
+        # - assume_1 /\ !assert_1
+        # - ...
+        # - assume_n /\ !assert_n
         for assume in self.assumes:
             conjuncts.append(assume.translate())
-        disj = "; ".join([(Expr.neg_expr(assertion)).optimize().translate() for assertion in self.asserts])
-        conjuncts.append("(" + disj + ")")
-        args = ", ".join([f"{var_name}" for ty_name, var_name in self.decls])
-        lhs = f"{self.name}({args})"
-        rhs = ", ".join(conjuncts)
-        ret += f"{lhs} :- {rhs}." + "\n"
+        disjuncts = [(Expr.neg_expr(assertion)).optimize().translate() for assertion in self.asserts]
+        for disj in disjuncts:
+            args = ", ".join([f"{var_name}" for ty_name, var_name in self.decls])
+            lhs = f"{self.name}({args})"
+            rhs = ", ".join(conjuncts + [disj])
+            ret += f"{lhs} :- {rhs}." + "\n"
         ret += f".output {self.name}" + "\n"
         return ret
 
