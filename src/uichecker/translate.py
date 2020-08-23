@@ -10,15 +10,17 @@ syntax = """
 ?prog: import* decl* stmt* assert*
 import: "from" NAME "import" NAME ";"
 decl: NAME NAME ";"
-stmt: "assume" expr ";" -> assume
-expr: expr binop expr  -> biexpr
-    | NAME "(" arguments ")" -> callexpr
-    | term -> termexpr
-binop : "=="  -> eqop
-      | "<"   -> leop
+stmt: "assume" expr ";"         -> assume
+expr: expr binop expr           -> biexpr
+    | uop expr                  -> uexpr
+    | NAME "(" arguments ")"    -> callexpr
+    | term                      -> termexpr
+binop : "=="                    -> eqop
+      | "<"                     -> leop
+uop : "!"                       -> negop
 arguments: term ("," term)*
-term: NAME   -> var
-    | NUMBER -> number
+term: NAME                      -> var
+    | NUMBER                    -> number
 assert: "assert" expr ";"
 
 COMMENT: /\/\/.*/
@@ -45,6 +47,12 @@ class Expr(object):
             self.binop = binop.data
             self.e1 = Expr(e1)
             self.e2 = Expr(e2)
+        elif tree.data == "uexpr":
+            self.type = "uexpr"
+            uop = tree.children[0]
+            e = tree.children[1]
+            self.uop = uop.data
+            self.e = Expr(e)
         elif tree.data == "callexpr":
             self.type = "callexpr"
             self.f = tree.children[0].value
@@ -55,15 +63,6 @@ class Expr(object):
             self.__init_term(tree.children[0])
         else:
             raise Exception(tree)
-
-    @staticmethod
-    def binop_expr(e1, binop: str, e2):
-        e = Expr()
-        e.type = "biexpr"
-        e.binop = binop
-        e.e1 = e1
-        e.e2 = e2
-        return e
 
     @staticmethod
     def var_expr(x: str):
@@ -80,6 +79,14 @@ class Expr(object):
         assert all(type(arg) is Expr for arg in args), args
         e.args = args
         return e
+
+    @staticmethod
+    def neg_expr(e: 'Expr'):
+        parent = Expr()
+        parent.type = "uexpr"
+        parent.uop = "negop"
+        parent.e = e
+        return parent
 
     def __init_term(self, tree):
         if tree.data == "var":
@@ -109,10 +116,15 @@ class Expr(object):
             return self.var
         elif self.type == "number":
             return str(self.number)
+        elif self.type == "uexpr":
+            if self.uop == "negop":
+                return f"!({self.e.translate()})"
+            else:
+                raise Exception(self)
         elif self.type == "biexpr":
             if self.binop == "eqop":
                 return f"{self.e1.translate()} = {self.e2.translate()}"
-            if self.binop == "leop":
+            elif self.binop == "leop":
                 return f"{self.e1.translate()} < {self.e2.translate()}"
             else:
                 # FIXME: process "and"
@@ -159,30 +171,38 @@ class Prog(object):
                 e = child.children[0]
                 self.asserts.append(Expr(e))
             else:
-                print(child)
+                raise Exception(child)
 
     def __str__(self):
         return f"imports: {self.imports}\ndecls: {self.decls}" + \
             f"\nassumes: {self.assumes}\nasserts: {self.asserts}"
 
-    def translate(self):
-        print("// GENERATED")
+    def translate(self) -> str:
+        ret = ""
+        ret += "// GENERATED" + "\n"
         typed_args = ", ".join([f"{var_name}: {ty_name}" for ty_name, var_name in self.decls])
-        print(f".decl {self.name}({typed_args})")
+        ret += f".decl {self.name}({typed_args})" + "\n"
         conjuncts = []
         # assume_1 /\ ... /\ assume_n /\ ! (assert_1 /\ assert2 /\ ...)
         # assume_1 /\ ... /\ assume_n /\ (!assert_1 ; !assert2 ; ...)
         for assume in self.assumes:
             conjuncts.append(assume.translate())
-        disj = "; ".join([f"!({assertion.translate()})" for assertion in self.asserts])
+        disj = "; ".join([(Expr.neg_expr(assertion)).translate() for assertion in self.asserts])
         conjuncts.append("(" + disj + ")")
         args = ", ".join([f"{var_name}" for ty_name, var_name in self.decls])
         lhs = f"{self.name}({args})"
         rhs = ", ".join(conjuncts)
-        print(f"{lhs} :- {rhs}.")
-        print(f".output {self.name}")
+        ret += f"{lhs} :- {rhs}." + "\n"
+        ret += f".output {self.name}" + "\n"
+        return ret
 
-spec_path = sys.argv[1]
-tree = vs_parser.parse(open(spec_path, "r").read())
-prog = Prog(os.path.basename(spec_path).strip(".vs"), tree)
-prog.translate()
+
+def translate(spec_path: str):
+    tree = vs_parser.parse(open(spec_path, "r").read())
+    prog = Prog(os.path.basename(spec_path).strip(".vs"), tree)
+    return prog.translate()
+
+
+if __name__ == "__main__":
+    spec_path = sys.argv[1]
+    print(translate(spec_path))

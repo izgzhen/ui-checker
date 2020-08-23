@@ -10,3 +10,5 @@ __pycache__
 output_*
 tmp_*
 *.egg-info
+
+pip-wheel-metadata/
