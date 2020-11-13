@@ -2,18 +2,20 @@
 
 import tempfile
 import os
-import json
 import glob
 import sys
-from termcolor import colored, cprint
+from termcolor import cprint
 import time
 import shutil
-from typing import Dict, Any, Set
 
 from msbase.subprocess_ import try_call_std
 from msbase.utils import load_json, write_pretty_json, file_size_mb
 
 from uichecker.common import run_markii, produce_report, parse_seconds
+
+import logging
+
+logger = logging.getLogger("ui-checker")
 
 if os.getenv("GTIME"):
     gtime = os.getenv("GTIME")
@@ -28,7 +30,7 @@ assert os.path.exists(apk) and apk.endswith(".apk"), f"Invalid APK path: {apk}"
 apk = os.path.realpath(apk)
 ic3_model = apk.replace(".apk", "_ic3.txt")
 if not os.path.exists(ic3_model):
-    print("WARN: no ic3_model at %s, use default analysis" % ic3_model)
+    logger.info("IC3 model is not available at %s, use default analysis" % ic3_model)
 
 spec_path = sys.argv[2]
 assert os.path.exists(spec_path) and spec_path.endswith(".dl"), f"Invalid spec path: {spec_path}"
@@ -81,7 +83,7 @@ if os.path.isdir(facts_dir):
         souffle_start_time = time.time()
         # Run Souffle
         stdout, stderr, code = try_call_std([gtime, '-f', 'gtime_memory: %M\ngtime_seconds: %E\ngtime_user_seconds: %U',
-                                            "souffle", "-w", "-F", facts_dir, spec_path, "-D", output_dir], noexception=True)
+                                            "souffle", "-w", "-F", facts_dir, spec_path, "-D", output_dir], noexception=True, output=False)
         assert "Error" not in stdout, stdout
         assert "Error" not in stderr, stderr
         souffle_duration_seconds = time.time() - souffle_start_time
