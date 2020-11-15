@@ -83,7 +83,7 @@ if os.path.isdir(facts_dir):
         souffle_start_time = time.time()
         # Run Souffle
         stdout, stderr, code = try_call_std([gtime, '-f', 'gtime_memory: %M\ngtime_seconds: %E\ngtime_user_seconds: %U',
-                                            "souffle", "-w", "-F", facts_dir, spec_path, "-D", output_dir], noexception=True, output=False)
+                                            "souffle", "-w", "-F", facts_dir, spec_path, "-D", output_dir], output=False)
         assert "Error" not in stdout, stdout
         assert "Error" not in stderr, stderr
         souffle_duration_seconds = time.time() - souffle_start_time
