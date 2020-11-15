@@ -14,6 +14,10 @@ Install dependencies:
   - Find instructions online depending on your OS
   - Recommend use https://www.jenv.be/ to make sure you are running JDK8
 - Set up SBT (https://www.scala-sbt.org/1.x/docs/Setup.html)
+- Install Android SDK and make sure that `ANDROID_SDK_ROOT` and `ANDROID_SDK`
+  environment variables are pointed to the SDK directory (which should contains
+  `platforms` directory and many others)
+- If you are using macOS, you might need to `brew install coreutils gnu-time` as well
 - Set up python environment
   - `poetry install`
   - `poetry shell`
