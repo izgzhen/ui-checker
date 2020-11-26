@@ -185,10 +185,6 @@
 .decl invokesReflectiveAPI(m: Method, callsite: Method)
 .input invokesReflectiveAPI
 
-// click of a sub-view Button in the dialog will trigger cb
-.decl alertDialogFixedButtonHandler(cb: Method, v: ViewID)
-.input alertDialogFixedButtonHandler
-
 //*** View allocation site properties ***//
 // callback cb of some activity will triagger allocation of Dialog view node v
 
@@ -301,5 +297,4 @@ backPressedHandler(CB, ACT) :- activityEventHandler("backPressed", CB, ACT).
 backPressedHandler(CB, ACT) :- activityEventHandler("press_key", CB, ACT).
 
 .decl dialogClickHandler(cb: Method, v: ViewID)
-dialogClickHandler(CB, V) :- alertDialogFixedButtonHandler(CB, V).
 dialogClickHandler(CB, V) :- dialogView(V, M), containsT(V, U), eventHandler("click", CB, U).
