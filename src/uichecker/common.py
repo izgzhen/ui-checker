@@ -6,11 +6,10 @@ import csv
 from lark import Lark
 import pexpect
 
-from msbase.utils import load_json, write_pretty_json, log_progress, readlines, getenv
+from msbase.utils import write_pretty_json, log_progress, getenv
 from msbase.subprocess_ import try_call_std
-from xml.sax.saxutils import escape
 
-from typing import Dict, Any, List, Set
+from typing import Dict, Any, Set
 
 syntax = """
 ?start: decl
