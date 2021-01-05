@@ -73,11 +73,20 @@ def parse_seconds(line: str):
 
 MARKII_TIMEOUT_SECONDS = int(getenv("MARKII_TIMEOUT_SECONDS", "1200"))
 
-def run_markii(apk: str, facts_dir: str):
+def run_markii(apk: str, facts_dir: str,
+               vasco_mode: str = "context-sensitive,flow-sensitive"):
     os.system("mkdir -p " + facts_dir)
     # Run markii
     try_call_std(["bash", "markii/build-run-markii.sh", apk, facts_dir],
-                 output=False, timeout_s=MARKII_TIMEOUT_SECONDS)
+                 output=False, timeout_s=MARKII_TIMEOUT_SECONDS, env={ "VASCO_MODE": vasco_mode})
+
+GATOR_TIMEOUT_SECONDS = int(getenv("GATOR_TIMEOUT_SECONDS", "1200"))
+
+def run_gator(apk: str, facts_dir: str):
+    os.system("mkdir -p " + facts_dir)
+    # Run gator
+    try_call_std(["bash", "gator/build-and-run-gator.sh", apk, facts_dir],
+                 output=False, timeout_s=GATOR_TIMEOUT_SECONDS)
 
 SOUFFLE_TIMEOUT_SECONDS = int(getenv("SOUFFLE_TIMEOUT_SECONDS", "360"))
 

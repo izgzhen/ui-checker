@@ -12,3 +12,4 @@ tmp_*
 *.egg-info
 
 pip-wheel-metadata/
+gator
