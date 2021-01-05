@@ -11,7 +11,7 @@ import shutil
 from msbase.subprocess_ import try_call_std
 from msbase.utils import load_json, write_pretty_json, file_size_mb
 
-from uichecker.common import run_markii, produce_report, parse_seconds
+from uichecker.common import run_markii, produce_report, parse_seconds, run_gator
 
 import logging
 
@@ -43,17 +43,24 @@ else:
 
 os.chdir(SCRIPT_DIR)
 
-facts_dir = SCRIPT_DIR + "/tmp_%s/%s.facts_dir" % ("markii", apk_name)
-output_dir = SCRIPT_DIR + "/output_%s/%s/" % ("markii", apk_name)
+if os.getenv("ENGINE"):
+    ENGINE = os.getenv("ENGINE")
+else:
+    ENGINE = "markii"
+assert ENGINE in ["markii", "gator", "markii-ci-fs", "markii-ci-fi", "markii-elf-ns"]
+
+facts_dir = SCRIPT_DIR + "/tmp_%s/%s.facts_dir" % (ENGINE, apk_name)
+output_dir = SCRIPT_DIR + "/output_%s/%s/" % (ENGINE, apk_name)
 os.system("mkdir -p %s" % output_dir)
 
 SOLVE_DL_ONLY = os.getenv("SOLVE_DL_ONLY")
 
 os.system("mkdir -p tmp")
 
-print(f"Android UI Checker\nspec:{spec_path}\napk:{apk}")
+print(f"Android UI Checker\nspec:{spec_path}\napk:{apk}\nengine:{ENGINE}\n")
 
 markii_duration_seconds = None
+gator_duration_seconds = None
 
 souffle_stats = {}
 
@@ -65,9 +72,22 @@ def valid_fact_dir(d: str):
     return True
 
 if (not valid_fact_dir(facts_dir) or os.getenv('FORCE_RERUN')) and SOLVE_DL_ONLY != "1":
-    markii_start_time = time.time()
-    run_markii(apk, facts_dir)
-    markii_duration_seconds = time.time() - markii_start_time
+    start_time = time.time()
+    if ENGINE == "markii":
+        run_markii(apk, facts_dir)
+        markii_duration_seconds = time.time() - start_time
+    elif ENGINE == "markii-elf-ns":
+        run_markii(apk, facts_dir, vasco_mode="elf-ns")
+        markii_duration_seconds = time.time() - start_time
+    elif ENGINE == "markii-ci-fs":
+        run_markii(apk, facts_dir, vasco_mode="context-insensitive,flow-sensitive")
+        markii_duration_seconds = time.time() - start_time
+    elif ENGINE == "markii-ci-fi":
+        run_markii(apk, facts_dir, vasco_mode="context-insensitive,flow-insensitive")
+        markii_duration_seconds = time.time() - start_time
+    elif ENGINE == "gator":
+        run_gator(apk, facts_dir)
+        gator_duration_seconds = time.time() - start_time
 
     with open(facts_dir + "/dummy.facts", "w") as f:
         f.write("1")
@@ -121,7 +141,8 @@ print("Spent %.2f seconds" % total_duration_seconds)
 stat_results = {
     "total_duration_seconds": total_duration_seconds,
     "souffle_duration_seconds": souffle_duration_seconds,
-    "markii_duration_seconds": markii_duration_seconds
+    "markii_duration_seconds": markii_duration_seconds,
+    "gator_duration_seconds": gator_duration_seconds,
 }
 
 if souffle_stats:
