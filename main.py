@@ -79,8 +79,7 @@ if (not valid_fact_dir(facts_dir) or os.getenv('FORCE_RERUN')) and SOLVE_DL_ONLY
     elif ENGINE == "markii-elf-nb":
         pass
     elif ENGINE == "markii-elf-ns":
-        run_markii(apk, facts_dir, vasco_mode="elf-ns")
-        markii_duration_seconds = time.time() - start_time
+        pass
     elif ENGINE == "markii-ci-fs":
         run_markii(apk, facts_dir, vasco_mode="context-insensitive,flow-sensitive")
         markii_duration_seconds = time.time() - start_time
