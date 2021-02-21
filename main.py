@@ -47,7 +47,7 @@ if os.getenv("ENGINE"):
     ENGINE = os.getenv("ENGINE")
 else:
     ENGINE = "markii"
-assert ENGINE in ["markii", "gator", "markii-ci-fs", "markii-ci-fi", "markii-elf-ns"]
+assert ENGINE in ["markii", "gator", "markii-ci-fs", "markii-ci-fi", "markii-elf-ns", "markii-elf-nb"]
 
 facts_dir = SCRIPT_DIR + "/tmp_%s/%s.facts_dir" % (ENGINE, apk_name)
 output_dir = SCRIPT_DIR + "/output_%s/%s/" % (ENGINE, apk_name)
@@ -76,6 +76,8 @@ if (not valid_fact_dir(facts_dir) or os.getenv('FORCE_RERUN')) and SOLVE_DL_ONLY
     if ENGINE == "markii":
         run_markii(apk, facts_dir)
         markii_duration_seconds = time.time() - start_time
+    elif ENGINE == "markii-elf-nb":
+        pass
     elif ENGINE == "markii-elf-ns":
         run_markii(apk, facts_dir, vasco_mode="elf-ns")
         markii_duration_seconds = time.time() - start_time
