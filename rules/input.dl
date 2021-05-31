@@ -145,7 +145,7 @@
 
 //*** FIXME (too adhoc) ***//
 // any callback that trigger interstitial ad by ad-network
-.decl showInterstitialAd(cb: Method, ad: Method)
+.decl showInterstitialAd(cb: Method, handler: Method, ad: Method)
 .input showInterstitialAd
 
 // any callback that reaches general ad show API by ad-network
