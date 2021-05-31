@@ -49,8 +49,9 @@ else:
     ENGINE = "markii"
 assert ENGINE in ["markii", "gator", "markii-ci-fs", "markii-ci-fi", "markii-elf-ns", "markii-elf-nb"]
 
-if os.getenv("PHASES"):
-    PHASES = os.getenv("PHASES").split(",")
+PHASES_ENV = os.getenv("PHASES")
+if PHASES_ENV is not None:
+    PHASES = PHASES_ENV.split(",")
 else:
     PHASES = ["analysis", "souffle"]
 assert all(p in ["analysis", "souffle"] for p in PHASES)
